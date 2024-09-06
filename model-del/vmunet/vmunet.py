@@ -1,11 +1,5 @@
 from .vmamba import VSSM
 import torch
-#---------------调试展示Tensor维度
-def custom_repr(self):
-    return f'{{Tensor:{tuple(self.shape)}}} {original_repr(self)}'
-original_repr = torch.Tensor.__repr__
-torch.Tensor.__repr__ = custom_repr
-
 from torch import nn
 
 
@@ -34,9 +28,6 @@ class VMUNet(nn.Module):
         if x.size()[1] == 1:
             x = x.repeat(1,3,1,1)
         logits = self.vmunet(x)
-        #-----多头输出汇总
-        # p1, p2, p3, p4 = self.vmunet(x)
-        # return p1, p2, p3, p4
         if self.num_classes == 1: return torch.sigmoid(logits)
         else: return logits
     

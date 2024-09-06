@@ -9,11 +9,6 @@ import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from einops import rearrange, repeat
 from timm.models.layers import DropPath, to_2tuple, trunc_normal_
-#---------------导入解码器架构
-import numpy as np
-from models.vmunet.decoers import CASCADE
-from models.vmunet.cnn_vit_backbone import SegmentationHead
-# from mamba_ssm.ops.selective_scan_interface import selective_scan_fn  # zmx add
 try:
     from mamba_ssm.ops.selective_scan_interface import selective_scan_fn, selective_scan_ref
 except:
@@ -25,9 +20,6 @@ try:
     from selective_scan import selective_scan_ref as selective_scan_ref_v1
 except:
     pass
-
-
-
 
 DropPath.__repr__ = lambda self: f"timm.DropPath({self.drop_prob})"
 
@@ -320,7 +312,7 @@ class SS2D(nn.Module):
         self.A_logs = self.A_log_init(self.d_state, self.d_inner, copies=4, merge=True) # (K=4, D, N)
         self.Ds = self.D_init(self.d_inner, copies=4, merge=True) # (K=4, D, N)
 
-        # self.selective_scan = selective_scan_fn  #zmx解注释
+        # self.selective_scan = selective_scan_fn
         self.forward_core = self.forward_corev0
 
         self.out_norm = nn.LayerNorm(self.d_inner)
@@ -384,7 +376,7 @@ class SS2D(nn.Module):
         return D
 
     def forward_corev0(self, x: torch.Tensor):
-        self.selective_scan = selective_scan_fn  # zmx注释掉
+        self.selective_scan = selective_scan_fn
         
         B, C, H, W = x.shape
         L = H * W
@@ -696,34 +688,6 @@ class VSSM(nn.Module):
         self.final_up = Final_PatchExpand2D(dim=dims_decoder[-1], dim_scale=4, norm_layer=norm_layer)
         self.final_conv = nn.Conv2d(dims_decoder[-1]//4, num_classes, 1)
 
-        #----初始化解码器;dropout；输出预测头
-        self.decoders = CASCADE(channels=[768, 384, 192, 96])
-        self.dropout = nn.Dropout(0.1)
-        self.segmentation_head1 = SegmentationHead(
-            in_channels=768,
-            out_channels=9,
-            kernel_size=1,
-            upsampling=32,
-        )
-        self.segmentation_head2 = SegmentationHead(
-            in_channels=384,
-            out_channels=9,
-            kernel_size=1,
-            upsampling=16,
-        )
-        self.segmentation_head3 = SegmentationHead(
-            in_channels=192,
-            out_channels=9,
-            kernel_size=1,
-            upsampling=8,
-        )
-        self.segmentation_head4 = SegmentationHead(
-            in_channels=96,
-            out_channels=9,
-            kernel_size=1,
-            upsampling=4
-        )
-
         # self.norm = norm_layer(self.num_features)
         # self.avgpool = nn.AdaptiveAvgPool1d(1)
         # self.head = nn.Linear(self.num_features, num_classes) if num_classes > 0 else nn.Identity()
@@ -767,10 +731,6 @@ class VSSM(nn.Module):
             x = layer(x)
         return x, skip_list
     
-    #------------------
-    
-    #-----------------网络结构 一层封装 不涉及具体实现------------------#
-    
     def forward_features_up(self, x, skip_list):
         for inx, layer_up in enumerate(self.layers_up):
             if inx == 0:
@@ -797,33 +757,11 @@ class VSSM(nn.Module):
         return x
 
     def forward(self, x):
-        x, skip_list = self.forward_features(x)  # (x:32.7.7.768)  (skiplist:(32.56.56.96),(32.28.28.192),(32.14.14.384),(32.7.7.768))
-        #-----------add decoders--------------------------#
-            #---------放缩x 适应decoder维度
-        B, H, W, C = x.size()
-        x = x.contiguous().view(B, C, H, W)
-            #---------放缩skip_list 适应decoder维度
-        adjusted_tensor_list = []
-        for tensor in skip_list:
-            tensor = tensor.unsqueeze(0)  # 添加一个维度，变为 [1, 32, H, W, C]
-            tensor = tensor.permute(0, 1, 4, 2, 3)  # 调整维度顺序
-            tensor = tensor.squeeze(0)  # 去掉添加的维度，变为 [32, C, H, W]
-            adjusted_tensor_list.append(tensor)
-        adjusted_tensor_list.reverse()
-            #-------进入decoder
-        x1_o, x2_o, x3_o, x4_o = self.decoders(x, adjusted_tensor_list)
-        p1 = self.dropout(self.segmentation_head1(x1_o))
-        p2 = self.dropout(self.segmentation_head2(x2_o))
-        p3 = self.dropout(self.segmentation_head3(x3_o))
-        p4 = self.dropout(self.segmentation_head4(x4_o))
-
-        outputs = p1 + p2 + p3 + p4
-
-        # return p1, p2, p3, p4
-        # x = self.forward_features_up(x, skip_list) # (x:32.56.56.96)
-        # x = self.forward_final(x) # (x:32.9.224.224)
+        x, skip_list = self.forward_features(x)
+        x = self.forward_features_up(x, skip_list)
+        x = self.forward_final(x)
         
-        return outputs
+        return x
 
 
 
