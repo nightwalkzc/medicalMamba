@@ -45,17 +45,17 @@ class setting_config:
     distributed = False
     local_rank = -1
     num_workers = 0 #16
-    seed = 42
+    seed = 2222
     world_size = None
     rank = None
     amp = False
 
     batch_size = 32
-    epochs = 300
+    epochs = 100
     work_dir = 'results/' + network + '_' + datasets_name + '_' + datetime.now().strftime('%A_%d_%B_%Y_%Hh_%Mm_%Ss') + '/'
     # 'D:/CODES/MedSeg/BIBM22/results/datrm2_isic18_Sunday_04_September_2022_12h_04m_10s/'
     print_interval = 20
-    val_interval = 30
+    val_interval = 10
     test_weights_path = ''
 
     threshold = 0.5
