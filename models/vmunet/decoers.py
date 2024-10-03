@@ -137,8 +137,8 @@ class CASCADE(nn.Module):
         
         
         # CAM4
-        d4 = self.CA4(d4)*d4
-        d4 = self.SA(d4)*d4 
+        # d4 = self.CA4(d4)*d4
+        # d4 = self.SA(d4)*d4 
         d4 = self.ConvBlock4(d4)
 
         #up一下d4
@@ -155,8 +155,8 @@ class CASCADE(nn.Module):
         d3 = torch.cat((x3,d3),dim=1)
         
         # CAM3
-        d3 = self.CA3(d3)*d3
-        d3 = self.SA(d3)*d3        
+        # d3 = self.CA3(d3)*d3
+        # d3 = self.SA(d3)*d3        
         d3 = self.ConvBlock3(d3)
         
         # upconv2
@@ -169,8 +169,8 @@ class CASCADE(nn.Module):
         d2 = torch.cat((x2,d2),dim=1)
         
         # CAM2
-        d2 = self.CA2(d2)*d2
-        d2 = self.SA(d2)*d2
+        # d2 = self.CA2(d2)*d2
+        # d2 = self.SA(d2)*d2
         d2 = self.ConvBlock2(d2)
         
         # upconv1
@@ -183,8 +183,8 @@ class CASCADE(nn.Module):
         d1 = torch.cat((x1,d1),dim=1)
         
         # CAM1
-        d1 = self.CA1(d1)*d1
-        d1 = self.SA(d1)*d1
+        # d1 = self.CA1(d1)*d1
+        # d1 = self.SA(d1)*d1
         d1 = self.ConvBlock1(d1)
         return d4, d3, d2, d1
 
