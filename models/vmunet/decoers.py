@@ -70,6 +70,89 @@ class Attention_block(nn.Module):
         psi = self.psi(psi)
 
         return x*psi
+    
+class Attention_block_2(nn.Module):
+    def __init__(self, F_g, F_l,F_int):
+        super(Attention_block_2, self).__init__()
+        self.W_g = nn.Sequential(
+            nn.Conv2d(F_g, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+
+        self.W_g_4 = nn.Sequential(
+            nn.Conv2d(F_g, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+
+        self.W_x = nn.Sequential(
+            nn.Conv2d(F_l, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+
+        self.W_x = nn.Sequential(
+            nn.Conv2d(F_l, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+
+        self.psi = nn.Sequential(
+            nn.Conv2d(F_int, 1, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(1),
+            nn.Sigmoid()
+        )
+
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self,g_4,g_3, x):
+        g_4 = self.W_g(g_4)
+        x1 = self.W_x(x)
+        g_3 = self.W_g(g_3)
+        psi = self.relu(g_4 + g_3 + x1)
+        psi = self.psi(psi)
+
+        return x * psi
+
+
+class Attention_block_1(nn.Module):
+    def __init__(self, F_g, F_l,F_int):
+        super(Attention_block_1, self).__init__()
+        self.W_g = nn.Sequential(
+            nn.Conv2d(F_g, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+
+        self.W_g_4 = nn.Sequential(
+            nn.Conv2d(F_g, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+
+        self.W_x = nn.Sequential(
+            nn.Conv2d(F_l, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+
+        self.W_x = nn.Sequential(
+            nn.Conv2d(F_l, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+
+        self.psi = nn.Sequential(
+            nn.Conv2d(F_int, 1, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(1),
+            nn.Sigmoid()
+        )
+
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self,g_4,g_3,g_2, x):
+        g_4 = self.W_g(g_4)
+        x1 = self.W_x(x)
+        g_3 = self.W_g(g_3)
+        g_2 = self.W_g(g_2)
+        psi = self.relu(g_4 + g_3+ g_2 + x1)
+        psi = self.psi(psi)
+
+        return x * psi
+
 
 class ChannelAttention(nn.Module):
     def __init__(self, in_planes, ratio=16):
@@ -119,11 +202,13 @@ class CASCADE(nn.Module):
         self.ConvBlock3 = conv_block(ch_in=2*channels[1], ch_out=channels[1])
 
         self.Up2 = up_conv(ch_in=channels[1],ch_out=channels[2])
-        self.AG2 = Attention_block(F_g=channels[2],F_l=channels[2],F_int=channels[3])
+        # self.AG2 = Attention_block(F_g=channels[2],F_l=channels[2],F_int=channels[3])
+        self.AG2 = Attention_block_2(F_g=channels[2], F_l=channels[2] ,F_int=channels[3])
         self.ConvBlock2 = conv_block(ch_in=2*channels[2], ch_out=channels[2])
         
         self.Up1 = up_conv(ch_in=channels[2],ch_out=channels[3])
         self.AG1 = Attention_block(F_g=channels[3],F_l=channels[3],F_int=32)
+        self.AG1 = Attention_block_1(F_g=channels[3], F_l=channels[3], F_int=int(channels[3]/2))
         self.ConvBlock1 = conv_block(ch_in=2*channels[3], ch_out=channels[3])
         
         self.CA4 = ChannelAttention(channels[0])
@@ -139,9 +224,17 @@ class CASCADE(nn.Module):
         self.shsa4 = SHSA(2*channels[3])
       
     def forward(self,x, skips):
-    
+
+
         d4 = self.Conv_1x1(x)
-        
+
+        # upconv
+        d3_4 = self.Up3(d4)
+        d2_4 = self.Up2(d3_4)
+        d1_4 = self.Up1(d2_4)
+        d2_3 = self.Up2(skips[1])
+        d1_3 = self.Up1(d2_3)
+        d1_2 = self.Up1(skips[2])        
         
         # CAM4
         # d4 = self.CA4(d4)*d4
@@ -149,8 +242,6 @@ class CASCADE(nn.Module):
         d4 = self.shsa1(d4)
         d4 = self.ConvBlock4(d4)
 
-
-        #up一下d4
         # d4 = self.Up4(d4)
         
         # upconv3
@@ -174,7 +265,7 @@ class CASCADE(nn.Module):
         d2 = self.Up2(d3)
         
         # AG2
-        x2 = self.AG2(g=d2,x=skips[2])
+        x2 = self.AG2(g_4 = d2, g_3 = d2_3 ,x=skips[2])
         
         # Concat 2
         d2 = torch.cat((x2,d2),dim=1)
@@ -190,7 +281,8 @@ class CASCADE(nn.Module):
         d1 = self.Up1(d2)
         
         # AG1
-        x1 = self.AG1(g=d1,x=skips[3])
+        # x1 = self.AG1(g=d1,x=skips[3])
+        x1 = self.AG1(g_4=d1_4, g_3=d1_3, g_2=d1_2,x=skips[3])
         
         # Concat 1
         d1 = torch.cat((x1,d1),dim=1)
