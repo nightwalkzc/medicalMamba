@@ -219,9 +219,9 @@ class CASCADE(nn.Module):
         self.SA = SpatialAttention()
 
         self.shsa1 = SHSA(channels[0])
-        self.shsa2 = SHSA(2*channels[1])
-        self.shsa3 = SHSA(2*channels[2])
-        self.shsa4 = SHSA(2*channels[3])
+        self.shsa2 = SHSA(channels[1])
+        self.shsa3 = SHSA(channels[2])
+        self.shsa4 = SHSA(channels[3])
       
     def forward(self,x, skips):
 
@@ -249,7 +249,7 @@ class CASCADE(nn.Module):
 
         # AG3
         # x3 = self.AG3(g=d3,x=skips[0])
-        x3 = self.AG3(g=d3,x=skips[1])
+        x3 = self.AG3(g=d3_4, x=skips[1])
         
         # Concat 3
         d3 = torch.cat((x3,d3),dim=1)
@@ -257,15 +257,15 @@ class CASCADE(nn.Module):
         # CAM3
         # d3 = self.CA3(d3)*d3
         # d3 = self.SA(d3)*d3
-        d3 = self.shsa2(d3)      
         d3 = self.ConvBlock3(d3)
+        d3 = self.shsa2(d3)      
         
         
         # upconv2
         d2 = self.Up2(d3)
         
         # AG2
-        x2 = self.AG2(g_4 = d2, g_3 = d2_3 ,x=skips[2])
+        x2 = self.AG2(g_4 = d2_4, g_3 = d2_3 ,x=skips[2])
         
         # Concat 2
         d2 = torch.cat((x2,d2),dim=1)
@@ -273,8 +273,8 @@ class CASCADE(nn.Module):
         # CAM2
         # d2 = self.CA2(d2)*d2
         # d2 = self.SA(d2)*d2
-        d2 = self.shsa3(d2)
         d2 = self.ConvBlock2(d2)
+        d2 = self.shsa3(d2)
         
         
         # upconv1
@@ -290,8 +290,10 @@ class CASCADE(nn.Module):
         # CAM1
         # d1 = self.CA1(d1)*d1
         # d1 = self.SA(d1)*d1
-        d1 = self.shsa4(d1)
         d1 = self.ConvBlock1(d1)
+        d1 = self.shsa4(d1)
+    
+        # d1 = d1 + x1
         
 
         return d4, d3, d2, d1
