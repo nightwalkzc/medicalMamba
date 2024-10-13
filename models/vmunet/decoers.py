@@ -258,7 +258,8 @@ class CASCADE(nn.Module):
         # d3 = self.CA3(d3)*d3
         # d3 = self.SA(d3)*d3
         d3 = self.ConvBlock3(d3)
-        d3 = self.shsa2(d3)      
+        d3 = self.shsa2(d3)
+        # d3 = d3 + x3     
         
         
         # upconv2
@@ -275,6 +276,7 @@ class CASCADE(nn.Module):
         # d2 = self.SA(d2)*d2
         d2 = self.ConvBlock2(d2)
         d2 = self.shsa3(d2)
+        # d2 = d2 + x2
         
         
         # upconv1
