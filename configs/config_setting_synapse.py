@@ -20,7 +20,8 @@ class setting_config:
         'drop_path_rate': 0.2,
         # 'load_ckpt_path': './pre_trained_weights/vmamba_small_e238_ema.pth',
         'load_ckpt_path': '/root/autodl-tmp/Medical_Project/data/pre_trained_weights/vmamba_small_e238_ema.pth',
-    }
+        #'load_ckpt_path': '/root/autodl-tmp/Medical_Project/medicalMamba/results/vmunet_synapse_Monday_14_October_2024_22h_01m_55s/checkpoints/latest.pth',
+            }
     datasets_name = 'synapse' 
     input_size_h = 224
     input_size_w = 224
@@ -35,7 +36,7 @@ class setting_config:
     else:
         raise Exception('datasets in not right!')
     
-    pretrained_path = '' # if using pretrained, please enter the path of weights
+    pretrained_path  = '/root/autodl-tmp/Medical_Project/medicalMamba/results/vmunet_synapse_Monday_14_October_2024_22h_01m_55s/checkpoints/latest.pth' # if using pretrained, please enter the path of weights
     num_classes = 9
     loss_weight = [1, 1]
     criterion = CeDiceLoss(num_classes, loss_weight)
@@ -55,7 +56,7 @@ class setting_config:
     work_dir = 'results/' + network + '_' + datasets_name + '_' + datetime.now().strftime('%A_%d_%B_%Y_%Hh_%Mm_%Ss') + '/'
     # 'D:/CODES/MedSeg/BIBM22/results/datrm2_isic18_Sunday_04_September_2022_12h_04m_10s/'
     print_interval = 20
-    val_interval = 25
+    val_interval = 10
     test_weights_path = ''
 
     threshold = 0.5

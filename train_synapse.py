@@ -91,6 +91,7 @@ def main(config):
 
     print('#----------Prepareing Models----------#')
     model_cfg = config.model_config
+    snapshot_path = config.pretrained_path
     if config.network == 'vmunet':
         model = VMUNet(
             num_classes=model_cfg['num_classes'],
@@ -100,7 +101,10 @@ def main(config):
             drop_path_rate=model_cfg['drop_path_rate'],
             load_ckpt_path=model_cfg['load_ckpt_path'],
         )
-        model.load_from()
+        
+        #model.load_from()
+        check = torch.load(snapshot_path, map_location=torch.device('cpu'))
+        model.load_state_dict(check['model_state_dict'])
     else: raise('Please prepare a right net!')
 
     if config.distributed:
