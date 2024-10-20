@@ -65,8 +65,6 @@ def train_one_epoch(train_loader,
 
 
 
-
-
 def val_one_epoch(test_datasets,
                     test_loader,
                     model,

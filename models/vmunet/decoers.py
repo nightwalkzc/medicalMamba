@@ -246,9 +246,12 @@ class CASCADE(nn.Module):
         # d4 = self.CA4(d4)*d4
         # d4 = self.SA(d4)*d4
         # GSA
+        d4_ide=d4
         d4 = self.GCBlock1(d4)
-        d4 = self.shsa1(d4)
+        d4_ide2=d4+d4_ide
+        d4 = self.shsa1(d4_ide2)
         d4 = self.ConvBlock4(d4)
+        d4=d4+d4_ide2
 
         # d4 = self.Up4(d4)
         
@@ -266,9 +269,13 @@ class CASCADE(nn.Module):
         # CAM3
         # d3 = self.CA3(d3)*d3
         # d3 = self.SA(d3)*d3
+        d3_ide=d3
         d3 = self.GCBlock2(d3)
-        d3 = self.shsa2(d3)
+        d3_ide2=d3+d3_ide
+        d3 = self.shsa2(d3_ide2)
+        d3=d3+d3_ide2
         d3 = self.ConvBlock3(d3)
+        
         # d3 = d3 + x3     
         
         
@@ -287,9 +294,13 @@ class CASCADE(nn.Module):
         # CAM2
         # d2 = self.CA2(d2)*d2
         # d2 = self.SA(d2)*d2
+        d2_ide=d2
         d2 = self.GCBlock3(d2)
-        d2 = self.shsa3(d2)
+        d2_ide2=d2+d2_ide
+        d2 = self.shsa3(d2_ide)
+        d2=d2+d2_ide2
         d2 = self.ConvBlock2(d2)
+        
         # d2 = d2 + x2
         
         
@@ -308,9 +319,13 @@ class CASCADE(nn.Module):
         # CAM1
         # d1 = self.CA1(d1)*d1
         # d1 = self.SA(d1)*d1
+        d1_ide=d1
         d1 = self.GCBlock4(d1)
+        d1_ide2=d1+d1_ide
         d1 = self.shsa4(d1)
+        d1=d1+d1_ide2
         d1 = self.ConvBlock1(d1)
+        
     
         # d1 = d1 + x1
         
